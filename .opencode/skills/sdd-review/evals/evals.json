@@ -1,0 +1,23 @@
+{
+  "skill_name": "sdd-review",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Run /sdd-review for openspec/changes/archive/2026-06-20-sprint-7-pricing-ui-tabs before apply. I want to know if the proposal, design, tasks, and specs are aligned enough for implementation.",
+      "expected_output": "A Portuguese SDD review report that checks consistency, scope, architecture, implementation readiness, database impact, risk, and concludes Pronto para Apply or Requer ajustes antes do Apply.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Run /sdd-review for openspec/changes/archive/2026-06-20-sprint-6-db-config. It adds database-backed configuration, and I want to know if the tasks cover the database work before implementation.",
+      "expected_output": "A Portuguese SDD review report that verifies DB/persistence readiness and task-to-requirement coverage without editing files.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Use /sdd-review on openspec/changes/archive/2026-06-20-sprint-7-sidebar-estoque-virtual. Focus especially on whether this should be split into smaller capabilities before implementation.",
+      "expected_output": "A scope-focused SDD review that identifies whether the change is too large, names possible capability splits, and still includes the standard verdict and checklist.",
+      "files": []
+    }
+  ]
+}

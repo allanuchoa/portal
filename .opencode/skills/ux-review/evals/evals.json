@@ -1,0 +1,26 @@
+{
+  "skill_name": "ux-review",
+  "evals": [
+    {
+      "id": 1,
+      "eval_name": "login-gate",
+      "prompt": "Acabamos de finalizar o Sprint de refatoração da tela de login (Phase 6 — Supabase Auth). Preciso de uma UX review completa do LoginGate. O componente está em src/components/auth/LoginGate.tsx. Compare com o design system em docs/design.md seção 4.1 (Login Gate) e seção 11.4 (Supabase Auth Login Gate). Verifique consistência visual, estados (loading, erro, sucesso), acessibilidade e aderência ao design system LIVOLTEK.",
+      "expected_output": "Relatório UX Review completo da tela de login",
+      "files": ["src/components/auth/LoginGate.tsx"]
+    },
+    {
+      "id": 2,
+      "eval_name": "kanban-board",
+      "prompt": "Fizemos o Kanban Board (Phase 5) em src/components/kanban/. Preciso de uma UX review completa. Analise KanbanBoard.tsx, KanbanColumn.tsx, KanbanCard.tsx e SortableKanbanCard.tsx. Compare com docs/design.md seção 11.2 (Project Tracking Kanban Board). Verifique: visual consistency com o design system LIVOLTEK, estados (loading, erro, vazio), interações de drag and drop, responsividade e acessibilidade.",
+      "expected_output": "Relatório UX Review completo do Kanban Board",
+      "files": ["src/components/kanban/KanbanBoard.tsx", "src/components/kanban/KanbanColumn.tsx", "src/components/kanban/KanbanCard.tsx", "src/components/kanban/SortableKanbanCard.tsx"]
+    },
+    {
+      "id": 3,
+      "eval_name": "calculator-ui",
+      "prompt": "Precisamos revisar a UI dos componentes da calculadora de nacionalização. Analise os componentes em src/components/calculator/: LineItemsTable.tsx, GlobalParams.tsx, FormattedInput.tsx, ProductAutocomplete.tsx, TabSelector.tsx. Compare com docs/design.md seção 4.3 (Calculator Two-Column Layout), seção 3.6 (Input Fields), seção 3.8 (Table), seção 4.12 (Product Autocomplete) e seção 8 (Iconography). Verifique: consistência visual dos inputs, tabela, autocomplete, se os ícones seguem o padrão Lucide, espaçamentos, tipografia e estados (loading, empty, error).",
+      "expected_output": "Relatório UX Review completo dos componentes da calculadora",
+      "files": ["src/components/calculator/LineItemsTable.tsx", "src/components/calculator/GlobalParams.tsx", "src/components/calculator/FormattedInput.tsx", "src/components/calculator/ProductAutocomplete.tsx", "src/components/calculator/TabSelector.tsx"]
+    }
+  ]
+}

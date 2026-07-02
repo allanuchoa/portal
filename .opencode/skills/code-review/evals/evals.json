@@ -1,0 +1,23 @@
+{
+  "skill_name": "code-review",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Acabei de aplicar a change de rateamento de frete. Dá uma revisada no código pra ver se está tudo certo antes de passar pra UX review. O diff inclui mudanças no motor de cálculo de apportionment e nos componentes de exibição do DRE.",
+      "expected_output": "Relatório de code review cobrindo as 7 áreas para as mudanças no cálculo de apportionment e DRE. Deve verificar arquitetura (cálculo puro na engine vs UI), qualidade (duplicação, nomes), robustez (divisão por zero, pesos zerados), performance (re-cálculos desnecessários), segurança (exposição de dados), consistência (formatação moeda/percentual) e riscos.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Terminei de implementar a tela de cadastro de produtos com integração Supabase. A change inclui migration SQL com RLS policies, o formulário React, e o service layer. Revisa pra mim? Quero saber se tem algo grave antes de chamar o QA.",
+      "expected_output": "Relatório de code review focado em segurança (RLS policies, validação de input), arquitetura (separação service/component), qualidade (tamanho do componente, nomes), robustez (tratamento de erro em chamadas Supabase, estados de loading/empty/error), consistência (padrões do projeto) e riscos.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Refatorei o cálculo de ICMS interestadual para usar a nova tabela de alíquotas do Supabase em vez do enum fixo. Mudei a migration, o engine, e alguns componentes que mostravam a alíquota. Pode revisar se não quebrei nada?",
+      "expected_output": "Relatório de code review verificando regressões (componentes que consomem a alíquota foram atualizados?), arquitetura (engine ainda pura?), performance (consulta Supabase eficiente?), robustez (e se a tabela estiver vazia?), consistência (formatação igual ao anterior), qualidade (código duplicado ou desnecessário) e riscos.",
+      "files": []
+    }
+  ]
+}

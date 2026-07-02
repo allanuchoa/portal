@@ -1,0 +1,69 @@
+{
+  "skill_name": "qa-review",
+  "evals": [
+    {
+      "id": 0,
+      "name": "sprint-rbac-e2e-roles",
+      "prompt": "Acabamos de concluir a Sprint de RBAC (admin/operador/consultor) com os testes E2E de roles. Roda o /qa-review pra mim e me diz se essa Sprint tá pronta pra release. As changes implementadas tao em openspec/changes/archive/2026-06-23-rbac-e2e-tests/ e openspec/changes/archive/2026-06-23-admin-role-management/.",
+      "expected_output": "Relatorio QA completo cobrindo as 8 areas, identificando riscos de RBAC (RLS, escalonamento, vazamento entre tenants), cobertura de testes E2E de roles, e conclusao Sprint pronta ou Requer ajustes.",
+      "files": [],
+      "assertions": [
+        { "name": "has-resumo-executivo", "description": "O relatório contém a seção Resumo Executivo", "type": "contains", "value": "Resumo Executivo" },
+        { "name": "has-problemas-encontrados", "description": "O relatório contém a seção Problemas Encontrados", "type": "contains", "value": "Problemas Encontrados" },
+        { "name": "has-cenarios-validacao", "description": "O relatório contém a seção Cenários Recomendados para Validação", "type": "contains", "value": "Cenários Recomendados para Validação" },
+        { "name": "has-conclusao", "description": "O relatório contém a seção Conclusão", "type": "contains", "value": "## Conclusão" },
+        { "name": "has-release-recommendation", "description": "O relatório conclui com recomendação de release", "type": "regex", "value": "Sprint pronta para Release|Requer ajustes antes da Release" },
+        { "name": "has-severity-classification", "description": "Classifica problemas por severidade", "type": "regex", "value": "\\[Cr.tico\\]|\\[Alto\\]|\\[M.dio\\]|\\[Baixo\\]" },
+        { "name": "has-evidence-reference", "description": "Problemas contêm referência a arquivos", "type": "regex", "value": "`[^`]+\\.[a-z]+`" },
+        { "name": "analyzes-rls-security", "description": "Analisa RLS e segurança do RBAC", "type": "regex", "value": "(?i)RLS|seguran.a|permiss.o|role|vazamento" },
+        { "name": "has-positive-points", "description": "Contém Pontos Positivos", "type": "contains", "value": "Pontos Positivos" },
+        { "name": "has-recomendacoes", "description": "Contém Recomendações", "type": "contains", "value": "## Recomendações" },
+        { "name": "has-riscos-residuais", "description": "Contém Riscos Residuais", "type": "contains", "value": "Riscos Residuais" },
+        { "name": "mentions-test-files", "description": "Menciona arquivos de teste", "type": "regex", "value": "`[^`]+\\.spec\\.ts`|`[^`]+\\.test\\.ts`" },
+        { "name": "finds-3-plus-problems", "description": "Encontra 3 ou mais problemas", "type": "regex", "value": "### \\[(?:Cr.tico|Alto|M.dio|Baixo)\\]" }
+      ]
+    },
+    {
+      "id": 1,
+      "name": "sprint-icms-difal-grossup",
+      "prompt": "Fizemos a fase do ICMS DIFAL / gross-up na Sprint phase4. Antes de eu falar que terminamos quero um QA serio. As changes tao em openspec/changes/archive/2026-06-22-phase4-icms-difal/. Roda a revisao de qualidade dessa sprint.",
+      "expected_output": "Relatorio QA focado no motor de calculo ICMS, apportionment rules (% peso vs % FOB), arredondamento (2 casas moeda / 4 percentual), edge cases (100% deferral, all benefits ON), regressao em fases anteriores, e conclusao de release readiness.",
+      "files": [],
+      "assertions": [
+        { "name": "has-resumo-executivo", "description": "Tem Resumo Executivo", "type": "contains", "value": "Resumo Executivo" },
+        { "name": "has-problemas-encontrados", "description": "Tem Problemas Encontrados", "type": "contains", "value": "Problemas Encontrados" },
+        { "name": "has-conclusao", "description": "Tem Conclusão", "type": "contains", "value": "## Conclusão" },
+        { "name": "has-release-recommendation", "description": "Recomendação de release", "type": "regex", "value": "Sprint pronta para Release|Requer ajustes antes da Release" },
+        { "name": "has-severity", "description": "Classificação por severidade", "type": "regex", "value": "\\[Cr.tico\\]|\\[Alto\\]|\\[M.dio\\]|\\[Baixo\\]" },
+        { "name": "analyzes-apportionment", "description": "Analisa apportionment rules", "type": "regex", "value": "(?i)apportionment|rateamento|% peso|% FOB|weight" },
+        { "name": "analyzes-icms-accuracy", "description": "Analisa cálculo ICMS", "type": "regex", "value": "(?i)ICMS|gross.up|DIFAL|aliquota" },
+        { "name": "checks-edge-cases", "description": "Verifica edge cases", "type": "regex", "value": "(?i)edge case|100% deferral|benefits ON|single item|item .nico" },
+        { "name": "has-test-coverage-analysis", "description": "Analisa cobertura de testes", "type": "regex", "value": "(?i)teste|cobertura|TC-TAX|E2E" },
+        { "name": "mentions-source-files", "description": "Referencia arquivos fonte", "type": "regex", "value": "`[^`]+\\.[a-z]+`" },
+        { "name": "finds-2-plus-problems", "description": "Encontra 2+ problemas", "type": "regex", "value": "### \\[(?:Cr.tico|Alto|M.dio|Baixo)\\]" },
+        { "name": "has-regression-analysis", "description": "Analisa risco de regressão", "type": "regex", "value": "(?i)regress.o|Regression|Sensitivity|DRE|fases anteriores|impacto indireto" }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "sprint-ncm-api",
+      "prompt": "/qa-review da sprint do NCM API integration que a gente terminou. A change esta em openspec/changes/archive/2026-06-23-ncm-api-integration/. Tem integracao com API externa de NCM e persistencia no Supabase, quero saber se tem risco de regressao no registro de produtos.",
+      "expected_output": "Relatorio QA cobrindo integracao com API NCM externa (tratamento de erro, timeout, retry), persistencia Supabase (RLS, schema), regressao no product registry existente, cenarios alternativos (NCM invalido, API fora, resposta vazia), e conclusao de release readiness.",
+      "files": [],
+      "assertions": [
+        { "name": "has-resumo-executivo", "description": "Tem Resumo Executivo", "type": "contains", "value": "Resumo Executivo" },
+        { "name": "has-problemas-encontrados", "description": "Tem Problemas Encontrados", "type": "contains", "value": "Problemas Encontrados" },
+        { "name": "has-conclusao", "description": "Tem Conclusão", "type": "contains", "value": "## Conclusão" },
+        { "name": "has-release-recommendation", "description": "Recomendação de release", "type": "regex", "value": "Sprint pronta para Release|Requer ajustes antes da Release" },
+        { "name": "has-severity", "description": "Classificação por severidade", "type": "regex", "value": "\\[Cr.tico\\]|\\[Alto\\]|\\[M.dio\\]|\\[Baixo\\]" },
+        { "name": "analyzes-external-api", "description": "Analisa integração com API externa", "type": "regex", "value": "(?i)API|retry|timeout|fallback|externa" },
+        { "name": "analyzes-supabase-persistence", "description": "Analisa persistência Supabase", "type": "regex", "value": "(?i)Supabase|RLS|schema|persist.ncia|migration|sync" },
+        { "name": "analyzes-regression-product-registry", "description": "Analisa regressão product registry", "type": "regex", "value": "(?i)regress.o|product registry|registro de produtos|autocomplete" },
+        { "name": "checks-alt-scenarios", "description": "Verifica cenários alternativos", "type": "regex", "value": "(?i)NCM inv.lido|API fora|API down|resposta vazia|empty|cancelamento|offline" },
+        { "name": "has-riscos-residuais", "description": "Tem Riscos Residuais", "type": "contains", "value": "Riscos Residuais" },
+        { "name": "finds-2-plus-problems", "description": "Encontra 2+ problemas", "type": "regex", "value": "### \\[(?:Cr.tico|Alto|M.dio|Baixo)\\]" },
+        { "name": "mentions-test-files", "description": "Menciona arquivos de teste", "type": "regex", "value": "`[^`]+\\.[a-z]+`" }
+      ]
+    }
+  ]
+}

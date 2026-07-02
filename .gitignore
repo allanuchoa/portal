@@ -1,0 +1,13 @@
+# Sistema
+Thumbs.db
+.DS_Store
+*.log
+
+# Editor
+.vscode/
+.idea/
+
+# Build / temp (projetos estáticos não usam npm, mas prevenção)
+node_modules/
+dist/
+*.env
