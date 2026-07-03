@@ -1,7 +1,16 @@
+var renderLauncherQueryActive = null;
+
 async function renderLauncher(session) {
   document.getElementById('user-email').textContent = session.user.email;
 
   var grid = document.getElementById('launcher-grid');
+
+  grid.innerHTML =
+    '<div class="skeleton-grid">' +
+    '<div class="skeleton-card"><div class="skeleton-icon"></div><div class="skeleton-line"></div><div class="skeleton-line short"></div></div>' +
+    '<div class="skeleton-card"><div class="skeleton-icon"></div><div class="skeleton-line"></div><div class="skeleton-line short"></div></div>' +
+    '<div class="skeleton-card"><div class="skeleton-icon"></div><div class="skeleton-line"></div><div class="skeleton-line short"></div></div>' +
+    '</div>';
 
   var _a = await supabaseClient
       .from('applications')
@@ -13,7 +22,17 @@ async function renderLauncher(session) {
 
   if (error) {
     console.error('Failed to load applications:', error);
-    grid.innerHTML = '<div class="empty-state"><div class="empty-state-card"><p>Em desenvolvimento</p></div></div>';
+    grid.innerHTML =
+      '<div class="error-state">' +
+      '<div class="error-state-card">' +
+      '<i data-lucide="alert-circle" class="error-icon"></i>' +
+      '<p>Nao foi possivel carregar suas ferramentas.<br>Tente novamente.</p>' +
+      '<button class="btn-retry" id="btn-retry">Tentar novamente</button>' +
+      '</div></div>';
+    lucide.createIcons();
+    document.getElementById('btn-retry').addEventListener('click', function () {
+      renderLauncher(session);
+    });
     return;
   }
 
@@ -47,7 +66,7 @@ async function renderLauncher(session) {
       html += '<div class="app-card">';
       html += '<i data-lucide="' + escapeHtml(app.icon || 'box') + '" class="app-icon"></i>';
       html += '<div class="app-name">' + escapeHtml(app.name) + '</div>';
-      html += '<button class="btn-access" data-url="' + escapeHtml(app.url) + '">Acessar</button>';
+      html += '<button class="btn-access" data-url="' + escapeHtml(app.url) + '">Acessar <i data-lucide="arrow-right" class="btn-icon"></i></button>';
       html += '</div>';
     }
 
