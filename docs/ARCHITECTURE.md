@@ -111,27 +111,29 @@ erDiagram
 ```
 
 ### Consulta de Lançamento Dinâmico (Portal)
-Para listar as ferramentas permitidas de um usuário logado, o Portal realiza a seguinte consulta:
+Para listar as ferramentas permitidas de um usuário logado, o Portal realiza a seguinte consulta. **Atenção**: sempre incluir o filtro explícito por `user_id` no client-side como defesa em profundidade (defense-in-depth), mesmo que o RLS já filtre no servidor. Se o RLS for desconfigurado acidentalmente, a aplicação não expõe dados de outros usuários.
 
 ```javascript
 // Busca do catálogo dinâmico de aplicações do usuário
 async function getUserApplications() {
-  const { data, error } = await supabase
+  const session = await supabase.auth.getSession();
+  const userId = session.data.session.user.id;
+
+  const { data, error } = await supabaseClient
     .from('applications')
-    .select(`
-      id, slug, name, url, icon, category
-    `)
+    .select('id, name, url, icon, category, user_applications!inner(user_id)')
     .eq('is_active', true)
-    .innerJoin('user_applications', 'id', 'application_id')
-    .eq('user_applications.user_id', supabase.auth.user().id);
+    .eq('user_applications.user_id', userId);
 
   if (error) {
-    console.error("Erro ao carregar aplicações:", error);
+    console.error('Erro ao carregar aplicações:', error);
     return [];
   }
   return data;
 }
 ```
+
+O sufixo `!inner` na relação `user_applications` força um INNER JOIN — só retorna `applications` que tenham pelo menos uma linha correspondente em `user_applications`. Sem o `!inner`, seria LEFT JOIN (retornaria todas as aplicações, mesmo sem vínculo).
 
 ### Isolamento de Dados por Ferramenta
 1.  **Prefixos nas Tabelas**: Cada ferramenta armazena seus dados em tabelas dedicadas prefixadas pelo seu slug curto.
@@ -157,6 +159,35 @@ USING (
   )
 );
 ```
+
+### Padrão de Trigger: Bypass para SQL Editor
+
+Triggers que restringem operações (ex: bloquear alteração de `role`) **devem** permitir bypass quando executados via SQL Editor (`service_role`). O SQL Editor não possui JWT, portanto `auth.uid()` retorna `NULL` — este é o marcador confiável para detectar contexto server-side:
+
+```sql
+CREATE OR REPLACE FUNCTION public.check_profile_update()
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = ''
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- SQL Editor (service_role) não tem JWT → auth.uid() IS NULL → bypass
+    IF auth.uid() IS NULL THEN
+        RETURN NEW;
+    END IF;
+
+    -- Restrições aplicam-se apenas a chamadas via anon_key (cliente)
+    IF OLD.role IS DISTINCT FROM NEW.role THEN
+        RAISE EXCEPTION 'Não é permitido alterar o próprio role';
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+```
+
+**Regra**: `auth.uid() IS NULL` = server-side (SQL Editor, trigger bootstrap, cron jobs). `auth.uid()` com valor = cliente autenticado via `anon_key`. **Nunca** use `auth.role() = 'service_role'` — no SQL Editor essa função retorna `NULL` porque não há JWT.
 
 ---
 

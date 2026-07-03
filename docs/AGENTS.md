@@ -100,3 +100,109 @@ Ao concluir qualquer alteração de código ou documentação em uma ferramenta,
 ### Adicionado / Modificado / Corrigido
 - [Descrição curta e clara da alteração realizada] - (Autor: Agente de IA [Nome/Modelo])
 ```
+
+---
+
+## 8. Estados da Interface e Resiliência
+
+Toda view que depende de dados externos (Supabase, CDN) **deve** implementar os quatro estados obrigatórios. Nenhuma tela pode ficar em branco enquanto espera uma resposta de rede.
+
+### 8.1 Estados Obrigatórios
+
+| Estado | O que renderizar | Exemplo |
+|---|---|---|
+| **Loading** | Skeleton ou spinner antes da query resolver | Grid de 3 cards com placeholder animado (`opacity` pulse) |
+| **Empty** | Mensagem informativa quando não há dados | "Nenhuma ferramenta disponível" — distinto do estado de erro |
+| **Error** | Ícone de alerta + descrição + botão "Tentar novamente" | Card com `alert-circle` + "Não foi possível carregar" + botão de retry |
+| **Success** | Conteúdo normal | Grid de cards / tabela / formulário |
+
+**Regra**: o estado de erro e o estado vazio NUNCA devem compartilhar a mesma mensagem. O usuário precisa distinguir "não tenho dados" de "a requisição falhou".
+
+### 8.2 HTML com Fallback Visível
+
+O `index.html` estático **deve** ter um estado visível por padrão (antes de qualquer JS executar). Exemplo:
+
+```html
+<!-- Correto: login visível como fallback -->
+<div id="view-login" class="view active">...</div>
+<div id="view-launcher" class="view">...</div>
+```
+
+Se o CDN do Supabase falhar ou o JS não carregar, o usuário ainda vê algo que não seja uma tela preta vazia.
+
+### 8.3 Event Listeners em Elementos Estáticos
+
+Elementos que existem no HTML estático (não criados dinamicamente) **devem** ter seus event listeners registrados uma única vez, nunca por render.
+
+```javascript
+// Correto: flag de controle
+var logoutBound = false;
+function bindLogout(btn) {
+  if (logoutBound) return;
+  logoutBound = true;
+  btn.addEventListener('click', handler);
+}
+
+// Errado: registrado em todo renderLauncher()
+btn.addEventListener('click', handler); // acumula N listeners
+```
+
+### 8.4 onAuthStateChange Obrigatório
+
+Toda aplicação que usa Supabase Auth **deve** escutar `onAuthStateChange` para reagir a `SIGNED_OUT` (expiração de sessão, logout em outra aba):
+
+```javascript
+supabaseClient.auth.onAuthStateChange(function (event, session) {
+  if (event === 'SIGNED_OUT') {
+    clearState();
+    showLogin();
+  }
+});
+```
+
+Sem isso, uma sessão expirada deixa o usuário preso em uma view quebrada até o próximo reload manual.
+
+### 8.5 Validação de URL Externa
+
+Todo `window.location.href` com valor vindo do banco de dados **deve** validar o esquema antes do redirect:
+
+```javascript
+var url = app.url;
+if (/^https?:\/\//.test(url)) {
+  window.location.href = url;
+}
+```
+
+Isso bloqueia `javascript:` e outros esquemas perigosos, mesmo que o banco esteja comprometido.
+
+### 8.6 Navegação por Teclado (Focus Visible)
+
+Todo elemento interativo (botão, input, link) **deve** ter indicador de foco visível:
+
+```css
+:focus-visible {
+  outline: 2px solid var(--color-primary-soft);
+  outline-offset: 2px;
+}
+```
+
+Remove `outline: none` de inputs e botões ou compense com `border-color` no `:focus`.
+
+### 8.7 Cor de Erro (Token Semântico)
+
+Embora o DESIGN.md reserve a palette semântica para contextos in-product, **as ferramentas do ecossistema são in-product**. Adicione um token de erro ao `:root`:
+
+```css
+--color-danger: #f87171;
+```
+
+Use-o em `.login-error`, estados de erro, toasts de falha e validação de formulários.
+
+### 8.8 Scripts SQL Idempotentes
+
+Todo script SQL versionado **deve** ser re-executável sem erros:
+
+- `CREATE TABLE IF NOT EXISTS` (nunca `CREATE TABLE` puro)
+- `CREATE OR REPLACE FUNCTION` para funções
+- `DROP TRIGGER IF EXISTS ... ON ...` antes de cada `CREATE TRIGGER`
+- `DROP POLICY IF EXISTS "nome" ON ...` antes de cada `CREATE POLICY`
