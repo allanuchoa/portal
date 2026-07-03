@@ -53,6 +53,9 @@
     logoutBtn.addEventListener('click', function () {
       client.auth.signOut().then(function () {
         window.location.href = portalUrl;
+      }).catch(function (err) {
+        console.error('Bridge logout error:', err);
+        window.location.href = portalUrl;
       });
     });
 

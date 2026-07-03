@@ -1,27 +1,15 @@
 async function renderLauncher(session) {
-  const userEmail = document.getElementById('user-email');
-  userEmail.textContent = session.user.email;
+  document.getElementById('user-email').textContent = session.user.email;
 
-  const btnLogout = document.getElementById('btn-logout');
-  btnLogout.addEventListener('click', async () => {
-    const { error } = await signOut();
-    if (error) {
-      console.error('Logout error:', error);
-    }
-    const grid = document.getElementById('launcher-grid');
-    grid.innerHTML = '';
-    document.getElementById('email').value = '';
-    document.getElementById('password').value = '';
-    document.getElementById('login-error').textContent = '';
-    showLogin();
-  });
+  var grid = document.getElementById('launcher-grid');
 
-  const grid = document.getElementById('launcher-grid');
-
-  const { data: apps, error } = await supabaseClient
-    .from('applications')
-    .select('id, name, url, icon, category, is_active')
-    .eq('is_active', true);
+  var _a = await supabaseClient
+      .from('applications')
+      .select('id, name, url, icon, category, user_applications!inner(user_id)')
+      .eq('is_active', true)
+      .eq('user_applications.user_id', session.user.id),
+    apps = _a.data,
+    error = _a.error;
 
   if (error) {
     console.error('Failed to load applications:', error);
@@ -34,22 +22,28 @@ async function renderLauncher(session) {
     return;
   }
 
-  const grouped = {};
-  for (const app of apps) {
-    const cat = app.category || 'Outros';
+  var grouped = {};
+  for (var i = 0; i < apps.length; i++) {
+    var app = apps[i];
+    var cat = app.category || 'Outros';
     if (!grouped[cat]) {
       grouped[cat] = [];
     }
     grouped[cat].push(app);
   }
 
-  let html = '';
-  for (const [category, items] of Object.entries(grouped)) {
+  var html = '';
+  var categories = Object.keys(grouped);
+  for (var c = 0; c < categories.length; c++) {
+    var category = categories[c];
+    var items = grouped[category];
+
     html += '<div class="category-section">';
     html += '<div class="category-label">' + escapeHtml(category) + '</div>';
     html += '<div class="card-grid">';
 
-    for (const app of items) {
+    for (var j = 0; j < items.length; j++) {
+      var app = items[j];
       html += '<div class="app-card">';
       html += '<i data-lucide="' + escapeHtml(app.icon || 'box') + '" class="app-icon"></i>';
       html += '<div class="app-name">' + escapeHtml(app.name) + '</div>';
@@ -63,20 +57,18 @@ async function renderLauncher(session) {
   grid.innerHTML = html;
   lucide.createIcons();
 
-  document.querySelectorAll('.btn-access').forEach(btn => {
+  document.querySelectorAll('.btn-access').forEach(function (btn) {
     btn.addEventListener('click', function () {
-      window.location.href = this.dataset.url;
+      var url = this.dataset.url;
+      if (/^https?:\/\//.test(url)) {
+        window.location.href = url;
+      }
     });
   });
 }
 
 function escapeHtml(str) {
-  const div = document.createElement('div');
+  var div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
-}
-
-function showLogin() {
-  document.getElementById('view-login').classList.add('active');
-  document.getElementById('view-launcher').classList.remove('active');
 }

@@ -33,7 +33,7 @@
 -- ============================================================================
 -- 1. PROFILES
 -- ============================================================================
-CREATE TABLE public.profiles (
+CREATE TABLE IF NOT EXISTS public.profiles (
     id         UUID PRIMARY KEY REFERENCES auth.users(id),
     name       TEXT,
     role       TEXT NOT NULL DEFAULT 'user'
@@ -65,6 +65,8 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW
@@ -73,7 +75,7 @@ CREATE TRIGGER on_auth_user_created
 -- ============================================================================
 -- 3. APPLICATIONS (REGISTRY DE FERRAMENTAS)
 -- ============================================================================
-CREATE TABLE public.applications (
+CREATE TABLE IF NOT EXISTS public.applications (
     id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     slug       TEXT NOT NULL UNIQUE,
     name       TEXT NOT NULL,
@@ -94,7 +96,7 @@ COMMENT ON COLUMN public.applications.is_active IS 'Se false, ferramenta oculta 
 -- ============================================================================
 -- 4. USER_APPLICATIONS (JUNÇÃO N:N DE PERMISSÕES)
 -- ============================================================================
-CREATE TABLE public.user_applications (
+CREATE TABLE IF NOT EXISTS public.user_applications (
     user_id        UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     application_id UUID NOT NULL REFERENCES public.applications(id) ON DELETE CASCADE,
     granted_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -117,6 +119,8 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS before_profile_update ON public.profiles;
+
 CREATE TRIGGER before_profile_update
     BEFORE UPDATE ON public.profiles
     FOR EACH ROW
@@ -134,12 +138,14 @@ ALTER TABLE public.user_applications ENABLE ROW LEVEL SECURITY;
 -- ============================================================================
 
 -- 7.1 Profiles: usuário lê apenas o próprio perfil
+DROP POLICY IF EXISTS "Read own profile" ON public.profiles;
 CREATE POLICY "Read own profile"
     ON public.profiles
     FOR SELECT
     USING (auth.uid() = id);
 
 -- 7.2 Applications: apenas ferramentas com vínculo ativo em user_applications
+DROP POLICY IF EXISTS "Read granted applications" ON public.applications;
 CREATE POLICY "Read granted applications"
     ON public.applications
     FOR SELECT
@@ -156,6 +162,7 @@ CREATE POLICY "Read granted applications"
     );
 
 -- 7.3 User Applications: usuário vê apenas seus próprios vínculos
+DROP POLICY IF EXISTS "Read own grants" ON public.user_applications;
 CREATE POLICY "Read own grants"
     ON public.user_applications
     FOR SELECT
@@ -169,12 +176,14 @@ CREATE POLICY "Read own grants"
 -- ============================================================================
 
 -- 8.1 Applications: sem INSERT via anon_key
+DROP POLICY IF EXISTS "Deny insert on applications" ON public.applications;
 CREATE POLICY "Deny insert on applications"
     ON public.applications
     FOR INSERT
     WITH CHECK (false);
 
 -- 8.2 Applications: sem UPDATE via anon_key
+DROP POLICY IF EXISTS "Deny update on applications" ON public.applications;
 CREATE POLICY "Deny update on applications"
     ON public.applications
     FOR UPDATE
@@ -182,18 +191,21 @@ CREATE POLICY "Deny update on applications"
     WITH CHECK (false);
 
 -- 8.3 Applications: sem DELETE via anon_key
+DROP POLICY IF EXISTS "Deny delete on applications" ON public.applications;
 CREATE POLICY "Deny delete on applications"
     ON public.applications
     FOR DELETE
     USING (false);
 
 -- 8.4 User applications: sem INSERT via anon_key (impede auto-concessão)
+DROP POLICY IF EXISTS "Deny insert on user_applications" ON public.user_applications;
 CREATE POLICY "Deny insert on user_applications"
     ON public.user_applications
     FOR INSERT
     WITH CHECK (false);
 
 -- 8.5 User applications: sem UPDATE via anon_key
+DROP POLICY IF EXISTS "Deny update on user_applications" ON public.user_applications;
 CREATE POLICY "Deny update on user_applications"
     ON public.user_applications
     FOR UPDATE
@@ -201,12 +213,14 @@ CREATE POLICY "Deny update on user_applications"
     WITH CHECK (false);
 
 -- 8.6 User applications: sem DELETE via anon_key
+DROP POLICY IF EXISTS "Deny delete on user_applications" ON public.user_applications;
 CREATE POLICY "Deny delete on user_applications"
     ON public.user_applications
     FOR DELETE
     USING (false);
 
 -- 8.7 Profiles: usuário pode atualizar a própria linha (colunas restritas por trigger abaixo)
+DROP POLICY IF EXISTS "Update own profile" ON public.profiles;
 CREATE POLICY "Update own profile"
     ON public.profiles
     FOR UPDATE
@@ -240,6 +254,8 @@ BEGIN
     RETURN NEW;
 END;
 $$;
+
+DROP TRIGGER IF EXISTS before_profile_update_check ON public.profiles;
 
 CREATE TRIGGER before_profile_update_check
     BEFORE UPDATE ON public.profiles

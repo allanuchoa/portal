@@ -14,26 +14,53 @@ function showLauncher() {
 }
 
 async function initApp() {
-  const session = await getSession();
-
-  if (session) {
-    showLauncher();
-    renderLauncher(session);
-  } else {
-    showLogin();
-  }
+  supabaseClient.auth.onAuthStateChange(function (event, session) {
+    if (event === 'SIGNED_OUT') {
+      clearLauncher();
+      showLogin();
+    }
+  });
 
   const loginForm = document.getElementById('login-form');
   const emailInput = document.getElementById('email');
   const passwordInput = document.getElementById('password');
   const loginError = document.getElementById('login-error');
   const submitBtn = loginForm.querySelector('button[type="submit"]');
+  const btnLogout = document.getElementById('btn-logout');
 
-  loginForm.addEventListener('submit', async (e) => {
+  var logoutBound = false;
+
+  function bindLogout() {
+    if (logoutBound) return;
+    logoutBound = true;
+    btnLogout.addEventListener('click', async function () {
+      var _a;
+      var error = (_a = await signOut()) === null || _a === void 0 ? void 0 : _a.error;
+      if (error) {
+        console.error('Logout error:', error);
+      }
+      clearLauncher();
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Entrar';
+      showLogin();
+    });
+  }
+
+  var session = await getSession();
+
+  if (session) {
+    showLauncher();
+    bindLogout();
+    renderLauncher(session);
+  } else {
+    showLogin();
+  }
+
+  loginForm.addEventListener('submit', async function (e) {
     e.preventDefault();
 
-    const email = emailInput.value.trim();
-    const password = passwordInput.value.trim();
+    var email = emailInput.value.trim();
+    var password = passwordInput.value.trim();
 
     if (!email || !password) {
       loginError.textContent = 'Preencha todos os campos';
@@ -44,19 +71,26 @@ async function initApp() {
     submitBtn.disabled = true;
     submitBtn.textContent = 'Entrando...';
 
-    const { error } = await signIn(email, password);
+    var result = await signIn(email, password);
 
-    if (error) {
-      loginError.textContent = 'Credenciais inválidas';
+    if (result.error) {
+      loginError.textContent = 'Credenciais invalidas';
       submitBtn.disabled = false;
       submitBtn.textContent = 'Entrar';
       return;
     }
 
-    const newSession = await getSession();
-    if (newSession) {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Entrar';
+
+    if (result.data.session) {
       showLauncher();
-      renderLauncher(newSession);
+      bindLogout();
+      renderLauncher(result.data.session);
     }
   });
+}
+
+function clearLauncher() {
+  document.getElementById('launcher-grid').innerHTML = '';
 }
