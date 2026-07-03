@@ -47,10 +47,22 @@
       </header>
       <main class="launcher-content">
         <h2>Ferramentas</h2>
-        <div id="launcher-grid"></div>
+
+        <div class="search-filter-container">
+          <div class="search-wrapper">
+            <i data-lucide="search" class="search-icon"></i>
+            <input type="text" id="search-input" placeholder="Pesquisar ferramentas... (pressione '/' para focar)" autocomplete="off">
+            <span class="search-shortcut">/</span>
+          </div>
+          <div id="category-filters" class="category-filters"></div>
+        </div>
+
+        <div id="launcher-grid" class="card-grid"></div>
       </main>
     </div>
   </div>
+
+  <div id="toast-container" class="toast-container"></div>
 
   <script src="js/config.js"></script>
   <script src="js/supabase.js"></script>

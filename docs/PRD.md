@@ -28,17 +28,28 @@ O Portal de Entrada é a porta de acesso e o distribuidor de sessões para todo 
 *   **Mecanismo**:
     1.  Ao carregar a Home, o Portal obtém o ID do usuário logado via `supabase.auth.getSession()`.
     2.  O Portal realiza uma consulta relacional nas tabelas `applications` e `user_applications` para filtrar apenas as ferramentas associadas àquele ID e que estão ativas (`is_active = true`).
-    3.  O Portal monta o grid de cards na tela dinamicamente utilizando o nome, URL de destino, ícone e categoria retornados pela consulta.
-*   **Ausência de Hardcode**: Nenhuma ferramenta (ex: "Precificação", "BESS", "PV") é declarada de forma estática no arquivo `index.html` ou `home.js`. O launcher funciona apenas como um renderizador de registros.
+    3.  O Portal monta o grid de cards na tela dinamicamente utilizando o nome, URL de destino, ícone, categoria e status retornados pela consulta.
+*   **Ausência de Hardcode**: Nenhuma ferramenta é declarada de forma estática no arquivo `index.html`. O launcher funciona apenas como um renderizador de registros.
 
-### RF03: Redirecionamento Autenticado Nativamente
-*   **Descrição**: Ao clicar no card de uma aplicação autorizada, o Portal simplesmente redireciona o usuário para a URL cadastrada no registro daquela aplicação.
+### RF03: Redirecionamento e Interações do Launcher
+*   **Descrição**: Ao clicar no card de uma aplicação autorizada, o Portal direciona o usuário para a URL correspondente, respeitando o status do projeto.
 *   **Mecanismo**:
-    1.  O Portal executa o redirecionamento convencional (`window.location.href = app.url`).
-    2.  O compartilhamento de sessão é garantido nativamente no navegador pelo cliente Supabase (usando `localStorage` compartilhado no mesmo domínio ou cookies de domínio curinga para subdomínios).
+    1.  **Card Inteiro Clicável**: Toda a área do card da ferramenta é clicável para acesso direto (sem botões secundários adicionais).
+    2.  **Tratamento de Status (Badges)**:
+        *   **active / beta**: O Portal executa o redirecionamento convencional (`window.location.href = app.url`). Sessão compartilhada nativamente pelo navegador.
+        *   **coming_soon (Em breve)**: O clique redireciona para um fluxo de bloqueio. O card tem opacidade reduzida, cursor desabilitado e dispara uma notificação (Toast) flutuante elegante na tela informando que a ferramenta está em desenvolvimento.
     3.  **Remoção de Risco**: Não são passados tokens, credenciais ou hashes na barra de endereço URL.
 
-### RF04: Encerramento de Sessão (Logout)
+### RF04: Busca Rápida e Filtros de Categoria (Spotlight-style)
+*   **Descrição**: O painel deve fornecer filtros de categorias e uma caixa de pesquisa com atalhos de teclado.
+*   **Mecanismo**:
+    1.  **Filtros por Pílulas**: Botões de filtro exibidos dinamicamente baseados nas categorias das ferramentas presentes na lista do usuário. Clicar em uma pílula filtra o grid instantaneamente.
+    2.  **Atalho '/' para Focar Busca**: Pressionar a tecla `/` foca automaticamente no campo de busca de ferramentas, limpando o grid de seleções do navegador.
+    3.  **Filtragem em Tempo Real**: Digitar na caixa de pesquisa filtra instantaneamente os cards na tela por nome ou categoria.
+    4.  **Enter para Lançamento Rápido**: Pressionar `Enter` na caixa de pesquisa abre imediatamente a primeira ferramenta visível correspondente no grid (estilo Spotlight/Raycast).
+    5.  **Atalho 'Esc' para Cancelar**: Pressionar `Esc` limpa o texto digitado e retira o foco da caixa de pesquisa.
+
+### RF05: Encerramento de Sessão (Logout)
 *   **Descrição**: O usuário deve poder encerrar a sessão ativa no Portal ou em qualquer ferramenta vinculada.
 *   **Fluxo**:
     1.  O botão "Sair" chama `supabase.auth.signOut()`.
@@ -50,7 +61,10 @@ O Portal de Entrada é a porta de acesso e o distribuidor de sessões para todo 
 ## 3. Requisitos Não Funcionais
 
 *   **RNF01: Stack Tecnológica Estática**: O Portal deve ser desenvolvido utilizando apenas HTML5, CSS Vanilla e JavaScript puro, sem builders (NPM/Vite) ou frameworks.
-*   **RNF02: Responsividade**: O layout do painel de lançamento dinâmico deve se ajustar a layouts mobile, tablets e desktops (grid flexível baseado em CSS Grid ou Flexbox).
+*   **RNF02: Layout Compacto e Responsividade**: O layout do painel deve se ajustar de forma fluida a qualquer resolução de tela:
+    *   **Desktop:** Grid de 6 colunas (`6x3`) para maximizar a densidade de informação e caber de 10 a 20 ferramentas sem rolagem excessiva.
+    *   **Tablet:** Grid de 4 colunas.
+    *   **Mobile / Telas Pequenas:** Grid de 2 colunas.
 *   **RNF03: Segurança de RLS**: A leitura das tabelas de aplicação deve ser protegida por Row Level Security no banco de dados para evitar que um usuário mal-intencionado liste ferramentas que não possui permissão para ver.
 
 ---
@@ -81,28 +95,25 @@ Caixa de login centralizada sobre fundo escuro (`#101010`), com bordas de 1px (`
 ```
 
 ### Dashboard Launcher Dinâmico (`index.html` com estado logado)
-Renderiza dinamicamente as ferramentas associadas ao usuário no banco.
+Renderiza o grid 6x3 ultra-minimalista, a caixa de busca com atalho visual `/` e os botões de filtros por categoria.
 
 ```
-+---------------------------------------------------------+
-| ALLAN WORKBENCH                       [usuario@email.com] [Sair] |
-+---------------------------------------------------------+
-|                                                         |
-|  Ferramentas Disponíveis:                               |
-|                                                         |
-|  [Categoria: Commercial]                                |
-|  +------------------+  +------------------+             |
-|  | Icon  Nome       |  | Icon  Nome       |             |
-|  | [Acessar (URL)]  |  | [Acessar (URL)]  |             |
-|  +------------------+  +------------------+             |
-|                                                         |
-|  [Categoria: Engineering]                               |
-|  +------------------+                                   |
-|  | Icon  Nome       |                                   |
-|  | [Acessar (URL)]  |                                   |
-|  +------------------+                                   |
-|                                                         |
-+---------------------------------------------------------+
++-----------------------------------------------------------------------------+
+| ALLAN WORKBENCH                                   [usuario@email.com] [Sair] |
++-----------------------------------------------------------------------------+
+|                                                                             |
+|   [ Pesquisar ferramentas... (pressione '/' para focar) [/] ]                |
+|                                                                             |
+|   Filtros: ( Todas ) ( Commercial ) ( Engineering )                         |
+|                                                                             |
+|   +---------------+ +---------------+ +---------------+ +---------------+   |
+|   |   (Icon)      | |   (Icon)      | |   (Icon)      | |   (Icon) [Beta]|   |
+|   |               | |               | |               | |               |   |
+|   |  Nacionaliz.  | |  Precific.    | |     Difal     | |      MMQ      |   |
+|   |  [Commercial] | |  [Commercial] | | [Commercial]  | | [Engineering] |   |
+|   +---------------+ +---------------+ +---------------+ +---------------+   |
+|                                                                             |
++-----------------------------------------------------------------------------+
 ```
 
 ---
@@ -129,6 +140,7 @@ O Portal e as demais ferramentas se apoiam neste esquema normalizado para govern
     *   `icon` (Text, nome/classe do ícone)
     *   `category` (Text, categoria para agrupamento, ex: `'Commercial'`)
     *   `is_active` (Boolean, padrão `true`)
+    *   `status` (Text, restrito a `'active' | 'beta' | 'coming_soon'`, padrão `'active'`)
     *   `created_at` (Timestamp)
 
 ### 3. Tabela `public.user_applications`

@@ -65,5 +65,8 @@
     header.appendChild(userInfo);
 
     document.body.insertBefore(header, document.body.firstChild);
+    
+    // Revela a interface após autenticação bem-sucedida
+    document.body.style.display = '';
   });
 })();

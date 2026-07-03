@@ -83,6 +83,7 @@ CREATE TABLE IF NOT EXISTS public.applications (
     icon       TEXT,
     category   TEXT,
     is_active  BOOLEAN NOT NULL DEFAULT true,
+    status     TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'beta', 'coming_soon')),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -92,6 +93,7 @@ COMMENT ON COLUMN public.applications.url       IS 'URL de deploy da ferramenta'
 COMMENT ON COLUMN public.applications.icon      IS 'Nome do ícone Lucide (ex: clipboard-list)';
 COMMENT ON COLUMN public.applications.category  IS 'Categoria de agrupamento no launcher';
 COMMENT ON COLUMN public.applications.is_active IS 'Se false, ferramenta oculta mesmo com vínculo ativo';
+COMMENT ON COLUMN public.applications.status    IS 'Status da ferramenta: active, beta ou coming_soon';
 
 -- ============================================================================
 -- 4. USER_APPLICATIONS (JUNÇÃO N:N DE PERMISSÕES)
