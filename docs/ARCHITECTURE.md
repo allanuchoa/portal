@@ -238,3 +238,13 @@ Para incluir uma nova ferramenta no ecossistema Allan Workbench, deve-se seguir 
 4.  **Registrar no Registry (Supabase)**: Inserir a nova ferramenta na tabela `public.applications` (slug, nome, URL da hospedagem, ícone a ser usado no launcher e categoria correspondente).
 5.  **Liberar Acessos**: Adicionar registros na tabela `public.user_applications` vinculando os IDs dos usuários de teste à nova aplicação para torná-la visível no Launcher.
 6.  **Deploy**: Configurar GitHub Actions para deploy contínuo da branch `main` no GitHub Pages do repositório da ferramenta.
+
+## Controle de acesso e convites (v2)
+
+- **Uma função decide tudo:** `wb_context(p_url)` devolve se o usuário logado pode abrir aquela URL, se é admin, se é convidado, e a lista de ferramentas dele. O portal e o bridge chamam a cada carregamento. Admin nunca é barrado.
+- **Convite:** `access_invites` guarda só o hash do token. O link é `PORTAL_URL#convite=TOKEN`. O portal cria uma sessão anônima (`signInAnonymously`) e chama `wb_redeem`, que grava linhas em `user_applications` com `expires_at` e `invite_id`.
+- **Por que em `user_applications`:** as policies existentes (home e tabelas `bes_*`, `imp_*`) já exigem essa linha, então valem para o convidado sem mudar nenhuma policy do Registry.
+- **Expiração:** `wb_context` apaga as linhas vencidas de quem chama. Revogar (`wb_invite_revoke`) apaga na hora. O JWT anônimo continua válido, mas sem linha em `user_applications` não abre nada.
+- **Admin:** `wb_invite_*` e `wb_app_*` são SECURITY DEFINER e conferem `profiles.role = 'admin'`. Os botões no portal são só conveniência.
+- **Requisito no Supabase:** "Allow anonymous sign-ins" ligado. O cadastro por e-mail precisa continuar permitido para o login anônimo funcionar; uma conta criada por fora não tem permissão nenhuma e não abre ferramenta alguma.
+- **Limite conhecido:** ferramentas que rodam só no navegador têm código público no GitHub; o controle de acesso é porta de entrada, não sigilo do código.

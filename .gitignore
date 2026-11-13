@@ -11,3 +11,6 @@ Thumbs.db
 node_modules/
 dist/
 *.env
+
+# Supabase CLI (estado local)
+supabase/

@@ -13,8 +13,39 @@ function showLauncher() {
   viewLauncher.classList.add('active');
 }
 
+var INVITE_ERRORS = {
+  invalid: 'Este link de acesso não é válido.',
+  revoked: 'Este acesso foi revogado por quem o enviou.',
+  expired: 'Este link de acesso expirou.',
+  used: 'Este link já foi usado pelo número máximo de pessoas.'
+};
+
+// Abre um link de convite (#convite=TOKEN): cria uma sessão anônima, se preciso, e resgata o convite.
+// Devolve { session, message }.
+async function enterWithInvite(token, session) {
+  var fresh = false;
+  if (session) {
+    var c = await supabaseClient.rpc('wb_context', { p_url: '' });
+    if (c.data && c.data.admin) return { session: session, message: 'Você está logado como dono. Para testar o link, abra em uma janela anônima.' };
+  } else {
+    var a = await supabaseClient.auth.signInAnonymously();
+    if (a.error || !a.data.session) {
+      console.error('Anonymous sign-in failed:', a.error);
+      return { session: null, message: 'Não foi possível abrir este link de acesso. Peça um novo a quem enviou.' };
+    }
+    session = a.data.session; fresh = true;
+  }
+  var r = await supabaseClient.rpc('wb_redeem', { p_token: token });
+  if (r.error || !r.data || !r.data.ok) {
+    var msg = (r.data && INVITE_ERRORS[r.data.reason]) || 'Não foi possível validar este link de acesso.';
+    if (fresh) { await signOut(); return { session: null, message: msg }; }   // não deixa uma sessão anônima sem nada
+    return { session: session, message: msg };
+  }
+  return { session: session, message: 'Acesso temporário liberado.', ok: true };
+}
+
 async function initApp() {
-  supabaseClient.auth.onAuthStateChange(function (event, session) {
+  supabaseClient.auth.onAuthStateChange(function (event) {
     if (event === 'SIGNED_OUT') {
       clearLauncher();
       showLogin();
@@ -26,34 +57,36 @@ async function initApp() {
   const passwordInput = document.getElementById('password');
   const loginError = document.getElementById('login-error');
   const submitBtn = loginForm.querySelector('button[type="submit"]');
-  const btnLogout = document.getElementById('btn-logout');
 
-  var logoutBound = false;
+  document.getElementById('btn-logout').addEventListener('click', async function () {
+    var r = await signOut();
+    if (r && r.error) console.error('Logout error:', r.error);
+    clearLauncher();
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Entrar';
+    showLogin();
+  });
 
-  function bindLogout() {
-    if (logoutBound) return;
-    logoutBound = true;
-    btnLogout.addEventListener('click', async function () {
-      var _a;
-      var error = (_a = await signOut()) === null || _a === void 0 ? void 0 : _a.error;
-      if (error) {
-        console.error('Logout error:', error);
-      }
-      clearLauncher();
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Entrar';
-      showLogin();
-    });
-  }
+  // Avisos e convite chegam pelo fragmento da URL, que é limpo em seguida (o token não fica no histórico).
+  var hash = location.hash;
+  var token = (hash.match(/^#convite=([A-Za-z0-9]{16,128})$/) || [])[1];
+  var notice = hash === '#sem-acesso' ? 'Você não tem acesso a essa ferramenta.' : hash === '#expirado' ? 'Seu acesso temporário terminou.' : '';
+  if (hash) history.replaceState(null, '', location.pathname + location.search);
 
   var session = await getSession();
+  var ok = false;
+  if (token) {
+    var inv = await enterWithInvite(token, session);
+    session = inv.session; notice = inv.message; ok = !!inv.ok;
+  }
 
   if (session) {
     showLauncher();
-    bindLogout();
-    renderLauncher(session);
+    await renderLauncher(session);
+    if (notice) showToast(notice, ok ? '' : 'coming-soon');
   } else {
     showLogin();
+    loginError.textContent = notice;
   }
 
   loginForm.addEventListener('submit', async function (e) {
@@ -73,24 +106,18 @@ async function initApp() {
 
     var result = await signIn(email, password);
 
-    if (result.error) {
-      loginError.textContent = 'Credenciais invalidas';
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Entrar';
-      return;
-    }
-
     submitBtn.disabled = false;
     submitBtn.textContent = 'Entrar';
 
+    if (result.error) {
+      loginError.textContent = 'Credenciais invalidas';
+      return;
+    }
+
     if (result.data.session) {
+      passwordInput.value = '';
       showLauncher();
-      bindLogout();
       renderLauncher(result.data.session);
     }
   });
-}
-
-function clearLauncher() {
-  document.getElementById('launcher-grid').innerHTML = '';
 }

@@ -1,5 +1,21 @@
 # Changelog — Portal de Entrada
 
+## [2.0.0] - 2026-11-12
+
+### Adicionado
+- Acesso temporário por link: convites com validade, limite de usos e escolha de ferramentas; sessão anônima do Supabase resgata o convite (`wb_redeem`) — Agente de IA (Claude Fable 5.2)
+- Tela "Acessos" (admin): criar, estender, revogar, duplicar e excluir convites — Agente de IA (Claude Fable 5.2)
+- Tela "Catálogo" (admin): cadastrar e editar ferramentas sem SQL — Agente de IA (Claude Fable 5.2)
+- Home: fixadas, usadas por último, seções por categoria recolhíveis, ordenação, visão em lista, descrição nos cards, selo "Novo", busca por descrição e palavras-chave, navegação por setas — Agente de IA (Claude Fable 5.2)
+- Preferências da home salvas em `user_prefs` (acompanham o usuário entre computadores) — Agente de IA (Claude Fable 5.2)
+- Bridge: trocador rápido de ferramenta com Ctrl+K e prazo do convidado no cabeçalho — Agente de IA (Claude Fable 5.2)
+- Migração `sql/002_access_and_home.sql` — Agente de IA (Claude Fable 5.2)
+
+### Alterado
+- Bridge passa a checar no banco (`wb_context`) se o usuário tem permissão para a ferramenta aberta; antes bastava ter sessão — Agente de IA (Claude Fable 5.2)
+- Cards viraram links de verdade (foco por teclado, abrir em nova aba) — Agente de IA (Claude Fable 5.2)
+- Categorias em português; card de teste e "Portal de Entrada" ocultos — Agente de IA (Claude Fable 5.2)
+
 ## [1.0.0] - 2026-07-02
 
 ### Adicionado

@@ -29,7 +29,7 @@
             <label for="password">Senha</label>
             <input type="password" id="password" placeholder="Sua senha" required>
           </div>
-          <p id="login-error" class="login-error"></p>
+          <p id="login-error" class="login-error" role="alert"></p>
           <button type="submit" class="btn-primary">Entrar</button>
         </form>
       </div>
@@ -41,8 +41,10 @@
       <header class="launcher-header">
         <span class="logo">Allan Workbench</span>
         <div class="user-info">
+          <button id="btn-access" class="btn-logout btn-sm" type="button" hidden>Acessos</button>
+          <button id="btn-catalog" class="btn-logout btn-sm" type="button" hidden>Catálogo</button>
           <span id="user-email" class="user-email"></span>
-          <button id="btn-logout" class="btn-logout">Sair</button>
+          <button id="btn-logout" class="btn-logout btn-sm">Sair</button>
         </div>
       </header>
       <main class="launcher-content">
@@ -51,22 +53,124 @@
         <div class="search-filter-container">
           <div class="search-wrapper">
             <i data-lucide="search" class="search-icon"></i>
-            <input type="text" id="search-input" placeholder="Pesquisar ferramentas... (pressione '/' para focar)" autocomplete="off">
+            <input type="text" id="search-input" placeholder="Pesquisar por nome, categoria ou assunto... (pressione '/' para focar)" autocomplete="off" aria-label="Pesquisar ferramentas">
             <span class="search-shortcut">/</span>
           </div>
-          <div id="category-filters" class="category-filters"></div>
+          <div class="toolbar">
+            <div id="category-filters" class="category-filters" role="group" aria-label="Filtrar por categoria"></div>
+            <div class="toolbar-right">
+              <label class="sort-label">Ordenar
+                <select id="sort-select" class="select">
+                  <option value="cat">Por categoria</option>
+                  <option value="az">Nome (A a Z)</option>
+                  <option value="use">Mais usadas</option>
+                  <option value="recent">Usadas por último</option>
+                  <option value="new">Mais novas</option>
+                </select>
+              </label>
+              <button id="view-toggle" class="icon-btn" type="button" aria-label="Alternar entre grade e lista" title="Alternar entre grade e lista"><i data-lucide="list"></i></button>
+            </div>
+          </div>
         </div>
 
-        <div id="launcher-grid" class="card-grid"></div>
+        <div id="launcher-grid"></div>
       </main>
     </div>
   </div>
 
-  <div id="toast-container" class="toast-container"></div>
+  <!-- Admin: acessos temporários -->
+  <dialog id="dlg-access" class="dlg" aria-labelledby="dlg-access-title">
+    <header class="dlg-head">
+      <h3 id="dlg-access-title">Acessos temporários</h3>
+      <button class="icon-btn" type="button" data-close aria-label="Fechar"><i data-lucide="x"></i></button>
+    </header>
+    <div class="dlg-body">
+      <form id="inv-form" class="form-grid">
+        <label class="span2">Para quem é
+          <input id="inv-label" class="field" maxlength="120" placeholder="Ex.: João, proposta da fábrica" required>
+        </label>
+        <fieldset class="span2">
+          <legend>Ferramentas liberadas</legend>
+          <label class="chk"><input type="checkbox" id="inv-all"> Todas as ferramentas</label>
+          <div id="inv-apps" class="chk-grid"></div>
+        </fieldset>
+        <label>Validade
+          <select id="inv-dur" class="select">
+            <option value="1">1 hora</option>
+            <option value="4">4 horas</option>
+            <option value="24" selected>24 horas</option>
+            <option value="72">3 dias</option>
+            <option value="168">7 dias</option>
+            <option value="720">30 dias</option>
+            <option value="custom">Escolher data e hora</option>
+          </select>
+        </label>
+        <label>Pessoas que podem usar o link
+          <input id="inv-uses" class="field" type="number" min="1" max="100" value="1" required>
+        </label>
+        <label class="span2" id="inv-until-wrap" hidden>Vale até
+          <input id="inv-until" class="field" type="datetime-local">
+        </label>
+        <p class="hint span2">Cada navegador que abre o link conta como uma pessoa. O acesso pode ser revogado a qualquer momento.</p>
+        <button class="btn-primary span2" type="submit">Gerar link</button>
+      </form>
+
+      <div id="inv-result" class="result" hidden>
+        <strong>Link gerado.</strong> Copie agora: ele não pode ser mostrado de novo.
+        <div class="copy-row">
+          <input id="inv-link" class="field" readonly aria-label="Link de acesso">
+          <button id="inv-copy" class="btn-logout btn-sm" type="button">Copiar</button>
+        </div>
+      </div>
+
+      <h4>Convites</h4>
+      <div id="inv-list" class="table-wrap"></div>
+    </div>
+  </dialog>
+
+  <!-- Admin: catálogo de ferramentas -->
+  <dialog id="dlg-catalog" class="dlg" aria-labelledby="dlg-catalog-title">
+    <header class="dlg-head">
+      <h3 id="dlg-catalog-title">Catálogo de ferramentas</h3>
+      <button class="icon-btn" type="button" data-close aria-label="Fechar"><i data-lucide="x"></i></button>
+    </header>
+    <div class="dlg-body">
+      <div id="app-list-wrap">
+        <button id="app-new" class="btn-primary btn-sm" type="button">Nova ferramenta</button>
+        <div id="app-list" class="table-wrap"></div>
+      </div>
+      <form id="app-form" class="form-grid" hidden>
+        <input type="hidden" id="app-id">
+        <label>Nome<input id="app-name" class="field" maxlength="60" required></label>
+        <label>Identificador (slug)<input id="app-slug" class="field" maxlength="50" pattern="[a-z0-9][a-z0-9-]+" placeholder="minha-ferramenta" required></label>
+        <label class="span2">Endereço<input id="app-url" class="field" type="url" placeholder="https://allanuchoa.github.io/minha-ferramenta/" required></label>
+        <label>Categoria<input id="app-category" class="field" list="app-cats" maxlength="40"><datalist id="app-cats"></datalist></label>
+        <label>Ícone (nome em lucide.dev)<input id="app-icon" class="field" maxlength="40" placeholder="box"></label>
+        <label class="span2">Descrição (uma linha no card)<input id="app-description" class="field" maxlength="140"></label>
+        <label class="span2">Palavras para a busca<input id="app-keywords" class="field" maxlength="200" placeholder="separadas por espaço"></label>
+        <label>Situação
+          <select id="app-status" class="select">
+            <option value="active">Ativa</option>
+            <option value="beta">Beta</option>
+            <option value="coming_soon">Em breve</option>
+          </select>
+        </label>
+        <label class="chk align-end"><input type="checkbox" id="app-active"> Aparece no portal</label>
+        <div class="form-actions span2">
+          <button class="btn-primary btn-sm" type="submit">Salvar</button>
+          <button id="app-cancel" class="btn-logout btn-sm" type="button">Cancelar</button>
+          <button id="app-delete" class="btn-danger btn-sm" type="button">Excluir</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <div id="toast-container" class="toast-container" role="status"></div>
 
   <script src="js/config.js"></script>
   <script src="js/supabase.js"></script>
-  <script src="js/app.js"></script>
   <script src="js/home.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
